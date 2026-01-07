@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+
+<div class="top">
+  {% for g in grids|sort(attribute='pinned', reverse=True) %}
+    <div class="tab-wrap {% if g.id == grid_id %}active-wrap{% endif %}">
+      
+      <a href="/workspace/{{ g.id }}"
+   class="tab {% if g.id == grid_id %}active{% endif %}"
+   ondblclick="renameByDblClick(event, {{ g.id }}, '{{ g.title }}')"
+   oncontextmenu="openMenu(event, {{ g.id }}, '{{ g.title }}')">
+
+   {% if g.pinned %}📌{% endif %} {{ g.title }}
+</a>
+
+      {% if g.id == grid_id %}
+        <!-- Rename -->
+        
+
+        <!-- Pin -->
+        <a href="/pin-grid/{{ g.id }}" class="icon">
+          📌
+        </a>
+
+        <!-- Delete -->
+        <a href="/delete-grid/{{ g.id }}"
+           class="icon delete"
+           onclick="return confirm('Delete this sheet?')">
+           🗑
+        </a>
+      {% endif %}
+
+    </div>
+  {% endfor %}
+
+  <a href="/create-grid" class="tab add">＋</a>
+  <a href="/logout" class="logout">Logout</a>
+</div>
+
+<div id="grid"></div>
+
+<script>
+  const GRID_DATA = {{ grid_data | tojson }};
+  const GRID_ID = {{ grid_id }};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+<script src="/static/js/grid.js"></script>
+<div id="contextMenu" class="context-menu">
+  <div onclick="renameSheet()">Rename</div>
+  <div onclick="pinSheet()">Pin / Unpin</div>
+  <div onclick="deleteSheet()">Delete</div>
+</div>
+</body>
+</html>
