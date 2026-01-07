@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>Workspace</title>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
   <link rel="stylesheet" href="/static/css/main.css">
 </head>
@@ -35,14 +38,29 @@
   <!-- Add new sheet -->
   <a href="/create-grid" class="tab add">＋</a>
 
-  <!-- 🔽 DOWNLOAD EXCEL BUTTON -->
+  <!-- Download Excel -->
   <a href="/download-excel/{{ grid_id }}" class="tab download">
-    Download Excel
+    ⬇ Excel
   </a>
 
+  <!-- Logout -->
   <a href="/logout" class="logout">Logout</a>
 </div>
 
+<!-- SHARE FORM -->
+<div class="share-bar">
+  <form method="POST" action="/share-grid/{{ grid_id }}" class="share-form">
+    <input
+      type="email"
+      name="email"
+      placeholder="Share with email"
+      required
+    >
+    <button type="submit">Share</button>
+  </form>
+</div>
+
+<!-- GRID -->
 <div id="grid"></div>
 
 <script>
@@ -53,6 +71,7 @@
 <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <script src="/static/js/grid.js"></script>
 
+<!-- RIGHT CLICK MENU -->
 <div id="contextMenu" class="context-menu">
   <div onclick="renameSheet()">Rename</div>
   <div onclick="pinSheet()">Pin / Unpin</div>
