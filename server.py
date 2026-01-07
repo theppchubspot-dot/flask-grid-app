@@ -41,6 +41,10 @@ class Grid(db.Model):
 def load_user(user_id):
     return Account.query.get(int(user_id))
 
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
 # ================= HELPERS =================
 def save_excel(account_id, grid_id, data):
     excel_dir = os.path.join(BASE_DIR, "excel_files")
