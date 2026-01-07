@@ -158,6 +158,15 @@ body {
   margin-left: 4px;
 }
 
+.tab.download {
+  background: #16a34a;
+  color: white;
+}
+
+.tab.download:hover {
+  background: #15803d;
+}
+
 .context-menu {
   position: absolute;
   background: #ffffff;
@@ -208,4 +217,5 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+
 }
