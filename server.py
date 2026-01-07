@@ -41,10 +41,6 @@ class Grid(db.Model):
 def load_user(user_id):
     return Account.query.get(int(user_id))
 
-@app.before_first_request
-def create_tables():
-    db.create_all()
-
 # ================= HELPERS =================
 def save_excel(account_id, grid_id, data):
     excel_dir = os.path.join(BASE_DIR, "excel_files")
@@ -178,5 +174,5 @@ def logout():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run()
 
