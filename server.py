@@ -169,6 +169,43 @@ def autosave(grid_id):
     save_excel(current_user.id, grid_id, data)
     return {"status": "saved"}
 
+@app.route('/autosave/<int:grid_id>', methods=['POST'])
+@login_required
+def autosave(grid_id):
+    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
+    data = request.json
+
+    grid.content = json.dumps(data)
+    db.session.commit()
+
+    save_excel(current_user.id, grid_id, data)
+    return {"status": "saved"}
+
+
+# ====== YAHAN PASTE KAR ======
+from flask import send_file
+
+@app.route('/download-excel/<int:grid_id>')
+@login_required
+def download_excel(grid_id):
+    path = os.path.join(
+        BASE_DIR,
+        "excel_files",
+        f"user_{current_user.id}_grid_{grid_id}.xlsx"
+    )
+
+    if not os.path.exists(path):
+        return "Excel not found", 404
+
+    return send_file(path, as_attachment=True)
+# ============================
+
+
+@app.route('/delete-grid/<int:grid_id>')
+@login_required
+def delete_grid(grid_id):
+    ...
+
 @app.route('/delete-grid/<int:grid_id>')
 @login_required
 def delete_grid(grid_id):
@@ -188,5 +225,6 @@ def logout():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
 
 
