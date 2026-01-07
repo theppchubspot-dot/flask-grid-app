@@ -229,6 +229,31 @@ def logout():
     logout_user()
     return redirect('/signin')
 
+# ================= FORGOT / RESET PASSWORD =================
+
+@app.route('/forgot', methods=['GET','POST'])
+def forgot():
+    if request.method == 'POST':
+        email = request.form['email']
+        user = Account.query.filter_by(email=email).first()
+        if user:
+            login_user(user)
+            return redirect('/reset-password')
+    return render_template('forgot.html')
+
+
+@app.route('/reset-password', methods=['GET','POST'])
+@login_required
+def reset_password():
+    if request.method == 'POST':
+        current_user.password = generate_password_hash(
+            request.form['password']
+        )
+        db.session.commit()
+        return redirect('/dashboard')
+    return render_template('reset.html')
+
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
