@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, UserMixin, login_user,
@@ -32,16 +32,17 @@ class Account(UserMixin, db.Model):
 
 class Grid(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    account_id = db.Column(db.Integer, nullable=False)
+    account_id = db.Column(db.Integer, nullable=False)  # owner
     title = db.Column(db.String(100))
     content = db.Column(db.Text)
     pinned = db.Column(db.Boolean, default=False)
+    shared_with = db.Column(db.Text, default="")  # comma separated emails
 
 @login_manager.user_loader
 def load_user(user_id):
     return Account.query.get(int(user_id))
 
-# ================= CREATE TABLES (RENDER SAFE) =================
+# ================= CREATE TABLES =================
 with app.app_context():
     db.create_all()
 
@@ -98,21 +99,15 @@ def signin():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    grids = Grid.query.filter_by(account_id=current_user.id).all()
+    grids = Grid.query.filter(
+        (Grid.account_id == current_user.id) |
+        (Grid.shared_with.like(f"%{current_user.email}%"))
+    ).all()
+
     if not grids:
         return redirect('/create-grid')
-    return redirect(f"/workspace/{grids[0].id}")
 
-@app.route('/debug')
-@login_required
-def debug():
-    grids = Grid.query.filter_by(account_id=current_user.id).all()
-    return {
-        "grids": [
-            {"id": g.id, "content": g.content}
-            for g in grids
-        ]
-    }
+    return redirect(f"/workspace/{grids[0].id}")
 
 @app.route('/create-grid')
 @login_required
@@ -144,47 +139,68 @@ def pin_grid(grid_id):
         db.session.commit()
     return redirect(f"/workspace/{grid_id}")
 
+# ================= SHARE GRID =================
+@app.route('/share-grid/<int:grid_id>', methods=['POST'])
+@login_required
+def share_grid(grid_id):
+    email = request.form['email']
+    user = Account.query.filter_by(email=email).first()
+    if not user:
+        return "User not found", 404
+
+    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
+    if not grid:
+        return "Not allowed", 403
+
+    shared = grid.shared_with.split(",") if grid.shared_with else []
+    if email not in shared:
+        shared.append(email)
+        grid.shared_with = ",".join(shared)
+        db.session.commit()
+
+    return redirect(f"/workspace/{grid_id}")
+
 @app.route('/workspace/<int:grid_id>')
 @login_required
 def workspace(grid_id):
-    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    grids = Grid.query.filter_by(account_id=current_user.id).all()
+    grid = Grid.query.filter(
+        Grid.id == grid_id,
+        (
+            (Grid.account_id == current_user.id) |
+            (Grid.shared_with.like(f"%{current_user.email}%"))
+        )
+    ).first()
+
+    grids = Grid.query.filter(
+        (Grid.account_id == current_user.id) |
+        (Grid.shared_with.like(f"%{current_user.email}%"))
+    ).all()
 
     return render_template(
-    'workspace.html',
-    grid_id=grid.id,
-    grid_data=json.loads(grid.content),
-    grids=grids
-)
+        'workspace.html',
+        grid_id=grid.id,
+        grid_data=json.loads(grid.content),
+        grids=grids
+    )
 
 @app.route('/autosave/<int:grid_id>', methods=['POST'])
 @login_required
 def autosave(grid_id):
-    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    data = request.json
+    grid = Grid.query.filter(
+        Grid.id == grid_id,
+        (
+            (Grid.account_id == current_user.id) |
+            (Grid.shared_with.like(f"%{current_user.email}%"))
+        )
+    ).first()
 
+    data = request.json
     grid.content = json.dumps(data)
     db.session.commit()
-
-    save_excel(current_user.id, grid_id, data)
+    save_excel(grid.account_id, grid_id, data)
     return {"status": "saved"}
 
-@app.route('/autosave/<int:grid_id>', methods=['POST'])
-@login_required
-def autosave(grid_id):
-    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    data = request.json
-
-    grid.content = json.dumps(data)
-    db.session.commit()
-
-    save_excel(current_user.id, grid_id, data)
-    return {"status": "saved"}
-
-
-# ====== YAHAN PASTE KAR ======
-from flask import send_file
-
+# ================= DOWNLOAD EXCEL =================
 @app.route('/download-excel/<int:grid_id>')
 @login_required
 def download_excel(grid_id):
@@ -198,23 +214,14 @@ def download_excel(grid_id):
         return "Excel not found", 404
 
     return send_file(path, as_attachment=True)
-# ============================
-
-
-@app.route('/delete-grid/<int:grid_id>')
-@login_required
-def delete_grid(grid_id):
-    ...
 
 @app.route('/delete-grid/<int:grid_id>')
 @login_required
 def delete_grid(grid_id):
     grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    if not grid:
-        return redirect('/dashboard')
-
-    db.session.delete(grid)
-    db.session.commit()
+    if grid:
+        db.session.delete(grid)
+        db.session.commit()
     return redirect('/dashboard')
 
 @app.route('/logout')
@@ -225,6 +232,3 @@ def logout():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
-
-
-
