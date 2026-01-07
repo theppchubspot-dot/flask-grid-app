@@ -151,11 +151,11 @@ def workspace(grid_id):
     grids = Grid.query.filter_by(account_id=current_user.id).all()
 
     return render_template(
-        'workspace.html',
-        grid_id=grid.id,
-        grid_data=grid.content,
-        grids=grids
-    )
+    'workspace.html',
+    grid_id=grid.id,
+    grid_data=json.loads(grid.content),
+    grids=grids
+)
 
 @app.route('/autosave/<int:grid_id>', methods=['POST'])
 @login_required
@@ -188,4 +188,5 @@ def logout():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
 
