@@ -103,6 +103,17 @@ def dashboard():
         return redirect('/create-grid')
     return redirect(f"/workspace/{grids[0].id}")
 
+@app.route('/debug')
+@login_required
+def debug():
+    grids = Grid.query.filter_by(account_id=current_user.id).all()
+    return {
+        "grids": [
+            {"id": g.id, "content": g.content}
+            for g in grids
+        ]
+    }
+
 @app.route('/create-grid')
 @login_required
 def create_grid():
@@ -177,3 +188,4 @@ def logout():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
