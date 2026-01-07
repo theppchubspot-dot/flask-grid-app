@@ -11,21 +11,16 @@
     <div class="tab-wrap {% if g.id == grid_id %}active-wrap{% endif %}">
       
       <a href="/workspace/{{ g.id }}"
-   class="tab {% if g.id == grid_id %}active{% endif %}"
-   ondblclick="renameByDblClick(event, {{ g.id }}, '{{ g.title }}')"
-   oncontextmenu="openMenu(event, {{ g.id }}, '{{ g.title }}')">
+         class="tab {% if g.id == grid_id %}active{% endif %}"
+         ondblclick="renameByDblClick(event, {{ g.id }}, '{{ g.title }}')"
+         oncontextmenu="openMenu(event, {{ g.id }}, '{{ g.title }}')">
 
-   {% if g.pinned %}📌{% endif %} {{ g.title }}
-</a>
+        {% if g.pinned %}📌{% endif %} {{ g.title }}
+      </a>
 
       {% if g.id == grid_id %}
-        <!-- Rename -->
-        
-
         <!-- Pin -->
-        <a href="/pin-grid/{{ g.id }}" class="icon">
-          📌
-        </a>
+        <a href="/pin-grid/{{ g.id }}" class="icon">📌</a>
 
         <!-- Delete -->
         <a href="/delete-grid/{{ g.id }}"
@@ -34,11 +29,17 @@
            🗑
         </a>
       {% endif %}
-
     </div>
   {% endfor %}
 
+  <!-- Add new sheet -->
   <a href="/create-grid" class="tab add">＋</a>
+
+  <!-- 🔽 DOWNLOAD EXCEL BUTTON -->
+  <a href="/download-excel/{{ grid_id }}" class="tab download">
+    Download Excel
+  </a>
+
   <a href="/logout" class="logout">Logout</a>
 </div>
 
@@ -51,10 +52,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <script src="/static/js/grid.js"></script>
+
 <div id="contextMenu" class="context-menu">
   <div onclick="renameSheet()">Rename</div>
   <div onclick="pinSheet()">Pin / Unpin</div>
   <div onclick="deleteSheet()">Delete</div>
 </div>
+
 </body>
 </html>
