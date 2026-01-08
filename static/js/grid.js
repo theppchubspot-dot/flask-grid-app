@@ -16,11 +16,8 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
 
 const hot = new Handsontable(container, {
   data,
-
-  colHeaders: headers,
+  colHeaders: true,
   rowHeaders: true,
-
-  columns: (index) => ({ type: 'text' }), // 🔥 KEY FIX
 
   height: '100%',
   width: '100%',
@@ -28,19 +25,44 @@ const hot = new Handsontable(container, {
 
   minRows: 15,
   minSpareRows: 1,
-  minSpareCols: 1,
 
-  allowInsertColumn: true,
-  allowRemoveColumn: true,
+  autoWrapRow: true,
+  autoWrapCol: true,
 
-  contextMenu: true,   // 🔥 DEFAULT MENU ONLY
+  contextMenu: {
+    items: {
+      row_above: {
+        name: 'Insert row above'
+      },
+      row_below: {
+        name: 'Insert row below'
+      },
+      col_left: {
+        name: 'Insert column left',
+        callback() {
+          hot.alter('insert_col', hot.getSelectedLast()[1]);
+        }
+      },
+      col_right: {
+        name: 'Insert column right',
+        callback() {
+          hot.alter('insert_col', hot.getSelectedLast()[1] + 1);
+        }
+      },
+      remove_row: {},
+      remove_col: {},
+      undo: {},
+      redo: {}
+    }
+  },
+
   dropdownMenu: true,
-
   manualColumnResize: true,
   manualRowResize: true,
 
   licenseKey: 'non-commercial-and-evaluation'
 });
+
 
 
 
@@ -82,6 +104,7 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 800);
 });
+
 
 
 
