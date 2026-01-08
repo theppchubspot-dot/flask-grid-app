@@ -89,8 +89,9 @@ def home():
 @app.route('/signup', methods=['GET','POST'])
 def signup():
     if request.method == 'POST':
-        if Account.query.filter_by(email=request.form['email']).first():
-            return render_template('signup.html', error="Email already exists")
+        existing = Account.query.filter_by(email=request.form['email']).first()
+        if existing:
+            return "Account already exists"
 
         acc = Account(
             email=request.form['email'],
@@ -98,8 +99,13 @@ def signup():
         )
         db.session.add(acc)
         db.session.commit()
-        login_user(acc)
-        return redirect('/create-grid')
+
+        # ❌ yahin login_user mat kar
+        # login_user(acc)
+
+        # ✅ signin pe bhej
+        return redirect('/signin')
+
     return render_template('signup.html')
 
 @app.route('/signin', methods=['GET','POST'])
@@ -107,9 +113,11 @@ def signin():
     if request.method == 'POST':
         acc = Account.query.filter_by(email=request.form['email']).first()
         if acc and check_password_hash(acc.password, request.form['password']):
-            login_user(acc)
+            login_user(acc, remember=True)  # 🔥 important
             return redirect('/dashboard')
-        return render_template('signin.html', error="Invalid credentials")
+
+        return "Invalid credentials"
+
     return render_template('signin.html')
 
 @app.route('/dashboard')
@@ -245,3 +253,4 @@ def reset_password():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
