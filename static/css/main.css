@@ -269,3 +269,23 @@ body {
   height: calc(100vh - 110px); /* top + share bar ke liye */
   background: white;
 }
+
+.sheet-actions {
+  background: #ffffff;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.add-col-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.add-col-btn:hover {
+  background: #1d4ed8;
+}
