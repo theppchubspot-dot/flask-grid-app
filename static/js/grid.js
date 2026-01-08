@@ -1,20 +1,3 @@
-/* ================== HANDSONTABLE ================== */
-
-const columns = [
-  { type: 'date', dateFormat: 'YYYY-MM-DD', correctFormat: true },
-  { type: 'text' },
-  { type: 'dropdown', source: ['Interested','Not Interested','Follow Up','Sale','No Response'] },
-  { type: 'text' },
-  { type: 'text' },
-  { type: 'text' },
-  { type: 'dropdown', source: ['Yes','No'] },
-  { type: 'dropdown', source: ['Yes','No'] },
-  { type: 'text' },
-  { type: 'text' },
-  { type: 'text' },
-  { type: 'text' }
-];
-
 const headers = [
   'Dated','Caller ID','Disposition','Cx Name',
   'Alt Phone #','Email','Remote','Call Back',
@@ -22,7 +5,7 @@ const headers = [
 ];
 
 const defaultData = Array.from({ length: 20 }, () =>
-  Array(columns.length).fill('')
+  Array(headers.length).fill('')
 );
 
 const container = document.getElementById("grid");
@@ -33,9 +16,11 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
 
 const hot = new Handsontable(container, {
   data,
-  columns,
+
   colHeaders: headers,
   rowHeaders: true,
+
+  columns: (index) => ({ type: 'text' }), // 🔥 KEY FIX
 
   height: '100%',
   width: '100%',
@@ -46,30 +31,17 @@ const hot = new Handsontable(container, {
   minSpareCols: 1,
 
   allowInsertColumn: true,
-allowRemoveColumn: true,
+  allowRemoveColumn: true,
 
-  autoWrapRow: true,
-  autoWrapCol: true,
-
-  contextMenu: {
-    items: {
-      row_above: {},
-      row_below: {},
-      col_left: {},
-      col_right: {},
-      remove_row: {},
-      remove_col: {},
-      undo: {},
-      redo: {}
-    }
-  },
-
+  contextMenu: true,   // 🔥 DEFAULT MENU ONLY
   dropdownMenu: true,
+
   manualColumnResize: true,
   manualRowResize: true,
 
   licenseKey: 'non-commercial-and-evaluation'
 });
+
 
 
 /* ================== AUTO COLUMN SYNC (VERY IMPORTANT) ================== */
@@ -110,5 +82,6 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 800);
 });
+
 
 
