@@ -38,7 +38,7 @@ const hot = new Handsontable(container, {
   rowHeaders: true,
 
   height: '75vh',
-  stretchH: 'all',
+  stretchH: 'none',
 
   minRows: 30,
   minSpareRows: 1,     // 👈 VERY IMPORTANT
@@ -133,4 +133,5 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
+
 
