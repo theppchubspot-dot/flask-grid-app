@@ -32,24 +32,23 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
   : defaultData;
 
 const hot = new Handsontable(container, {
-  data,
-  columns,
+  data: data,
+  columns: columns,
   colHeaders: headers,
   rowHeaders: true,
 
-  /* ❌ Right blank area fix */
-  stretchH: 'none',
+  height: '75vh',
+  width: '100%',
 
-  /* ✅ Rows auto add */
+  stretchH: 'all',   // ✅ right side blank fix
+
   minRows: 30,
-  minSpareRows: 1,
+  minSpareRows: 1,   // row auto add
+  minSpareCols: 1,   // 👈 column auto add (IMPORTANT)
 
-  /* ✅ Excel like navigation */
   autoWrapRow: true,
   autoWrapCol: true,
-  enterMoves: { row: 1, col: 0 },
 
-  /* ✅ Column add / remove enabled */
   contextMenu: [
     'row_above',
     'row_below',
@@ -59,15 +58,15 @@ const hot = new Handsontable(container, {
     'remove_col'
   ],
 
-  dropdownMenu: true,
+  allowInsertRow: true,
+  allowInsertColumn: true,   // 👈 column add enable
 
   manualColumnResize: true,
   manualRowResize: true,
 
-  height: '75vh',
-
   licenseKey: 'non-commercial-and-evaluation'
 });
+
 
 
 /* ================== ADD COLUMN BUTTON (OPTIONAL BUT BEST) ================== */
@@ -157,3 +156,4 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
+
