@@ -33,11 +33,10 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
 
 const hot = new Handsontable(container, {
   data: data,
-  columns: columns,
   colHeaders: headers,
   rowHeaders: true,
 
-  height: '75vh',
+  height: 'auto',
   width: '100%',
 
   stretchH: 'all',   // ✅ right side blank fix
@@ -156,4 +155,5 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
+
 
