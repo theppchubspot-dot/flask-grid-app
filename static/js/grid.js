@@ -45,6 +45,9 @@ const hot = new Handsontable(container, {
   minSpareRows: 1,
   minSpareCols: 1,
 
+  allowInsertColumn: true,
+allowRemoveColumn: true,
+
   autoWrapRow: true,
   autoWrapCol: true,
 
@@ -107,4 +110,5 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 800);
 });
+
 
