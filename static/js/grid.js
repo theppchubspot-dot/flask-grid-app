@@ -32,22 +32,23 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
   : defaultData;
 
 const hot = new Handsontable(container, {
-  data: data,
+  data,
+  columns,                 // ✅ MISSING THA
   colHeaders: headers,
   rowHeaders: true,
 
-  height: 'auto',
+  height: 520,              // ✅ FIX: auto hatao
   width: '100%',
   stretchH: 'all',
 
   minRows: 30,
   minSpareRows: 1,
-  minSpareCols: 1,     // 👈 column auto add
+  minSpareCols: 1,          // ✅ new column auto
 
   autoWrapRow: true,
   autoWrapCol: true,
 
-  contextMenu: true,   // 👈 now Insert Column will appear
+  contextMenu: true,        // Insert col/row enabled
   dropdownMenu: true,
 
   manualColumnResize: true,
@@ -57,16 +58,27 @@ const hot = new Handsontable(container, {
 });
 
 
+/* ================== AUTO COLUMN SYNC ================== */
+
+hot.addHook('afterCreateCol', (index, amount) => {
+  for (let i = 0; i < amount; i++) {
+    columns.splice(index, 0, { type: 'text' });
+    headers.splice(index, 0, `Column ${hot.countCols()}`);
+  }
+
+  hot.updateSettings({
+    columns,
+    colHeaders: headers
+  });
+});
 
 
-/* ================== ADD COLUMN BUTTON (OPTIONAL BUT BEST) ================== */
+/* ================== ADD COLUMN BUTTON ================== */
 
 function addColumn() {
   hot.alter('insert_col', hot.countCols());
-  hot.updateSettings({
-    colHeaders: [...hot.getColHeader(), `Column ${hot.countCols()}`]
-  });
 }
+
 
 /* ================== AUTOSAVE ================== */
 
@@ -82,7 +94,7 @@ hot.addHook('afterChange', (changes, source) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(hot.getData())
     });
-  }, 1000);
+  }, 800);
 });
 
 
@@ -91,10 +103,8 @@ hot.addHook('afterChange', (changes, source) => {
 let selectedGridId = null;
 let selectedGridTitle = null;
 
-/* Right-click menu */
 function openMenu(e, gridId, title) {
   e.preventDefault();
-
   selectedGridId = gridId;
   selectedGridTitle = title;
 
@@ -104,20 +114,17 @@ function openMenu(e, gridId, title) {
   menu.style.left = e.pageX + "px";
 }
 
-/* Hide menu on click */
 document.addEventListener("click", () => {
   const menu = document.getElementById("contextMenu");
   if (menu) menu.style.display = "none";
 });
 
-/* Double-click rename */
 function renameByDblClick(e, gridId, title) {
   e.preventDefault();
   e.stopPropagation();
   renameGrid(gridId, title);
 }
 
-/* Rename logic */
 function renameGrid(gridId, title) {
   const newName = prompt("Rename sheet", title);
   if (!newName) return;
@@ -136,7 +143,6 @@ function renameGrid(gridId, title) {
   form.submit();
 }
 
-/* Context menu actions */
 function deleteSheet() {
   if (confirm("Delete this sheet?")) {
     window.location.href = `/delete-grid/${selectedGridId}`;
@@ -146,6 +152,3 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
-
-
-
