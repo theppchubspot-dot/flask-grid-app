@@ -21,7 +21,7 @@ const headers = [
   'Agent Name','Other Details','Comments','Auditor Comments'
 ];
 
-const defaultData = Array.from({ length: 30 }, () =>
+const defaultData = Array.from({ length: 20 }, () =>
   Array(columns.length).fill('')
 );
 
@@ -33,22 +33,22 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
 
 const hot = new Handsontable(container, {
   data,
-  columns,                 // ✅ MISSING THA
+  columns,
   colHeaders: headers,
   rowHeaders: true,
 
-  height: 520,              // ✅ FIX: auto hatao
+  height: '100%',            // ✅ FULL PAGE
   width: '100%',
   stretchH: 'all',
 
-  minRows: 30,
+  minRows: 15,               // 👈 neeche blank kam
   minSpareRows: 1,
-  minSpareCols: 1,          // ✅ new column auto
+  minSpareCols: 1,
 
   autoWrapRow: true,
   autoWrapCol: true,
 
-  contextMenu: true,        // Insert col/row enabled
+  contextMenu: true,
   dropdownMenu: true,
 
   manualColumnResize: true,
@@ -58,12 +58,12 @@ const hot = new Handsontable(container, {
 });
 
 
-/* ================== AUTO COLUMN SYNC ================== */
+/* ================== AUTO COLUMN SYNC (VERY IMPORTANT) ================== */
 
 hot.addHook('afterCreateCol', (index, amount) => {
   for (let i = 0; i < amount; i++) {
     columns.splice(index, 0, { type: 'text' });
-    headers.splice(index, 0, `Column ${hot.countCols()}`);
+    headers.splice(index, 0, `Column ${headers.length + 1}`);
   }
 
   hot.updateSettings({
@@ -96,59 +96,3 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 800);
 });
-
-
-/* ================== SHEET CONTROLS ================== */
-
-let selectedGridId = null;
-let selectedGridTitle = null;
-
-function openMenu(e, gridId, title) {
-  e.preventDefault();
-  selectedGridId = gridId;
-  selectedGridTitle = title;
-
-  const menu = document.getElementById("contextMenu");
-  menu.style.display = "block";
-  menu.style.top = e.pageY + "px";
-  menu.style.left = e.pageX + "px";
-}
-
-document.addEventListener("click", () => {
-  const menu = document.getElementById("contextMenu");
-  if (menu) menu.style.display = "none";
-});
-
-function renameByDblClick(e, gridId, title) {
-  e.preventDefault();
-  e.stopPropagation();
-  renameGrid(gridId, title);
-}
-
-function renameGrid(gridId, title) {
-  const newName = prompt("Rename sheet", title);
-  if (!newName) return;
-
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = `/rename-grid/${gridId}`;
-
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "title";
-  input.value = newName;
-
-  form.appendChild(input);
-  document.body.appendChild(form);
-  form.submit();
-}
-
-function deleteSheet() {
-  if (confirm("Delete this sheet?")) {
-    window.location.href = `/delete-grid/${selectedGridId}`;
-  }
-}
-
-function pinSheet() {
-  window.location.href = `/pin-grid/${selectedGridId}`;
-}
