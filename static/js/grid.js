@@ -32,28 +32,52 @@ const data = Array.isArray(GRID_DATA) && GRID_DATA.length
   : defaultData;
 
 const hot = new Handsontable(container, {
-  data: data,
-  columns: columns,
+  data,
+  columns,
   colHeaders: headers,
   rowHeaders: true,
 
-  
+  /* ❌ Right blank area fix */
   stretchH: 'none',
 
+  /* ✅ Rows auto add */
   minRows: 30,
-  minSpareRows: 1,     // 👈 VERY IMPORTANT
+  minSpareRows: 1,
 
+  /* ✅ Excel like navigation */
   autoWrapRow: true,
   autoWrapCol: true,
+  enterMoves: { row: 1, col: 0 },
 
-  contextMenu: true,
+  /* ✅ Column add / remove enabled */
+  contextMenu: [
+    'row_above',
+    'row_below',
+    'col_left',
+    'col_right',
+    'remove_row',
+    'remove_col'
+  ],
+
   dropdownMenu: true,
 
   manualColumnResize: true,
   manualRowResize: true,
 
+  height: '75vh',
+
   licenseKey: 'non-commercial-and-evaluation'
 });
+
+
+/* ================== ADD COLUMN BUTTON (OPTIONAL BUT BEST) ================== */
+
+function addColumn() {
+  hot.alter('insert_col', hot.countCols());
+  hot.updateSettings({
+    colHeaders: [...hot.getColHeader(), `Column ${hot.countCols()}`]
+  });
+}
 
 /* ================== AUTOSAVE ================== */
 
@@ -71,6 +95,7 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 1000);
 });
+
 
 /* ================== SHEET CONTROLS ================== */
 
@@ -100,11 +125,10 @@ document.addEventListener("click", () => {
 function renameByDblClick(e, gridId, title) {
   e.preventDefault();
   e.stopPropagation();
-
   renameGrid(gridId, title);
 }
 
-/* Common rename logic */
+/* Rename logic */
 function renameGrid(gridId, title) {
   const newName = prompt("Rename sheet", title);
   if (!newName) return;
@@ -133,6 +157,3 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
-
-
-
