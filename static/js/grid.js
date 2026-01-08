@@ -36,11 +36,22 @@ const hot = new Handsontable(container, {
   columns: columns,
   colHeaders: headers,
   rowHeaders: true,
+
+  height: '75vh',
+  stretchH: 'all',
+
+  minRows: 30,
+  minSpareRows: 1,     // 👈 VERY IMPORTANT
+
+  autoWrapRow: true,
+  autoWrapCol: true,
+
   contextMenu: true,
   dropdownMenu: true,
-  stretchH: 'all',
+
   manualColumnResize: true,
   manualRowResize: true,
+
   licenseKey: 'non-commercial-and-evaluation'
 });
 
@@ -122,3 +133,4 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
+
