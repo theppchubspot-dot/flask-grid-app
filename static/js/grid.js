@@ -37,20 +37,31 @@ const hot = new Handsontable(container, {
   colHeaders: headers,
   rowHeaders: true,
 
-  height: '100%',            // ✅ FULL PAGE
+  height: '100%',
   width: '100%',
   stretchH: 'all',
 
-  minRows: 15,               // 👈 neeche blank kam
+  minRows: 15,
   minSpareRows: 1,
   minSpareCols: 1,
 
   autoWrapRow: true,
   autoWrapCol: true,
 
-  contextMenu: true,
-  dropdownMenu: true,
+  contextMenu: {
+    items: {
+      row_above: {},
+      row_below: {},
+      col_left: {},
+      col_right: {},
+      remove_row: {},
+      remove_col: {},
+      undo: {},
+      redo: {}
+    }
+  },
 
+  dropdownMenu: true,
   manualColumnResize: true,
   manualRowResize: true,
 
@@ -96,3 +107,4 @@ hot.addHook('afterChange', (changes, source) => {
     });
   }, 800);
 });
+
