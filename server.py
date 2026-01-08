@@ -10,17 +10,29 @@ import json, os
 
 # ================= APP SETUP =================
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
-os.makedirs(INSTANCE_DIR, exist_ok=True)
-
-DB_PATH = os.path.join(INSTANCE_DIR, "appdata.db")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# ================= DATABASE (POSTGRES / SQLITE FALLBACK) =================
+db_url = os.environ.get("DATABASE_URL")
+
+if db_url:
+    # Render PostgreSQL fix
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+else:
+    # Local development fallback
+    INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+    os.makedirs(INSTANCE_DIR, exist_ok=True)
+    DB_PATH = os.path.join(INSTANCE_DIR, "appdata.db")
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
+
 db = SQLAlchemy(app)
+
+# ================= LOGIN =================
 login_manager = LoginManager(app)
 login_manager.login_view = 'signin'
 
@@ -32,11 +44,11 @@ class Account(UserMixin, db.Model):
 
 class Grid(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    account_id = db.Column(db.Integer, nullable=False)  # owner
+    account_id = db.Column(db.Integer, nullable=False)
     title = db.Column(db.String(100))
     content = db.Column(db.Text)
     pinned = db.Column(db.Boolean, default=False)
-    shared_with = db.Column(db.Text, default="")  # comma separated emails
+    shared_with = db.Column(db.Text, default="")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -77,6 +89,9 @@ def home():
 @app.route('/signup', methods=['GET','POST'])
 def signup():
     if request.method == 'POST':
+        if Account.query.filter_by(email=request.form['email']).first():
+            return render_template('signup.html', error="Email already exists")
+
         acc = Account(
             email=request.form['email'],
             password=generate_password_hash(request.form['password'])
@@ -94,6 +109,7 @@ def signin():
         if acc and check_password_hash(acc.password, request.form['password']):
             login_user(acc)
             return redirect('/dashboard')
+        return render_template('signin.html', error="Invalid credentials")
     return render_template('signin.html')
 
 @app.route('/dashboard')
@@ -102,7 +118,7 @@ def dashboard():
     grids = Grid.query.filter(
         (Grid.account_id == current_user.id) |
         (Grid.shared_with.like(f"%{current_user.email}%"))
-    ).all()
+    ).order_by(Grid.pinned.desc()).all()
 
     if not grids:
         return redirect('/create-grid')
@@ -112,9 +128,10 @@ def dashboard():
 @app.route('/create-grid')
 @login_required
 def create_grid():
+    count = Grid.query.filter_by(account_id=current_user.id).count()
     grid = Grid(
         account_id=current_user.id,
-        title=f"Sheet {Grid.query.filter_by(account_id=current_user.id).count()+1}",
+        title=f"Sheet {count + 1}",
         content='[]'
     )
     db.session.add(grid)
@@ -139,26 +156,14 @@ def pin_grid(grid_id):
         db.session.commit()
     return redirect(f"/workspace/{grid_id}")
 
-# ================= SHARE GRID =================
-@app.route('/share-grid/<int:grid_id>', methods=['POST'])
+@app.route('/delete-grid/<int:grid_id>')
 @login_required
-def share_grid(grid_id):
-    email = request.form['email']
-    user = Account.query.filter_by(email=email).first()
-    if not user:
-        return "User not found", 404
-
+def delete_grid(grid_id):
     grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    if not grid:
-        return "Not allowed", 403
-
-    shared = grid.shared_with.split(",") if grid.shared_with else []
-    if email not in shared:
-        shared.append(email)
-        grid.shared_with = ",".join(shared)
+    if grid:
+        db.session.delete(grid)
         db.session.commit()
-
-    return redirect(f"/workspace/{grid_id}")
+    return redirect('/dashboard')
 
 @app.route('/workspace/<int:grid_id>')
 @login_required
@@ -169,12 +174,12 @@ def workspace(grid_id):
             (Grid.account_id == current_user.id) |
             (Grid.shared_with.like(f"%{current_user.email}%"))
         )
-    ).first()
+    ).first_or_404()
 
     grids = Grid.query.filter(
         (Grid.account_id == current_user.id) |
         (Grid.shared_with.like(f"%{current_user.email}%"))
-    ).all()
+    ).order_by(Grid.pinned.desc()).all()
 
     return render_template(
         'workspace.html',
@@ -192,7 +197,7 @@ def autosave(grid_id):
             (Grid.account_id == current_user.id) |
             (Grid.shared_with.like(f"%{current_user.email}%"))
         )
-    ).first()
+    ).first_or_404()
 
     data = request.json
     grid.content = json.dumps(data)
@@ -200,7 +205,6 @@ def autosave(grid_id):
     save_excel(grid.account_id, grid_id, data)
     return {"status": "saved"}
 
-# ================= DOWNLOAD EXCEL =================
 @app.route('/download-excel/<int:grid_id>')
 @login_required
 def download_excel(grid_id):
@@ -209,46 +213,31 @@ def download_excel(grid_id):
         "excel_files",
         f"user_{current_user.id}_grid_{grid_id}.xlsx"
     )
-
     if not os.path.exists(path):
         return "Excel not found", 404
-
     return send_file(path, as_attachment=True)
 
-@app.route('/delete-grid/<int:grid_id>')
-@login_required
-def delete_grid(grid_id):
-    grid = Grid.query.filter_by(id=grid_id, account_id=current_user.id).first()
-    if grid:
-        db.session.delete(grid)
-        db.session.commit()
-    return redirect('/dashboard')
-
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     return redirect('/signin')
 
-# ================= FORGOT / RESET PASSWORD =================
-
+# ================= PASSWORD RESET =================
 @app.route('/forgot', methods=['GET','POST'])
 def forgot():
     if request.method == 'POST':
-        email = request.form['email']
-        user = Account.query.filter_by(email=email).first()
+        user = Account.query.filter_by(email=request.form['email']).first()
         if user:
             login_user(user)
             return redirect('/reset-password')
     return render_template('forgot.html')
 
-
 @app.route('/reset-password', methods=['GET','POST'])
 @login_required
 def reset_password():
     if request.method == 'POST':
-        current_user.password = generate_password_hash(
-            request.form['password']
-        )
+        current_user.password = generate_password_hash(request.form['password'])
         db.session.commit()
         return redirect('/dashboard')
     return render_template('reset.html')
@@ -256,4 +245,3 @@ def reset_password():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
-
