@@ -15,7 +15,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev-secret")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ================= DATABASE (POSTGRES / SQLITE FALLBACK) =================
+# ================= DATABASE =================
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, "instance", "appdata.db")
+
 db_url = os.environ.get("DATABASE_URL")
 
 if db_url:
@@ -24,12 +27,11 @@ if db_url:
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 else:
-    # Local development fallback
-    INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
-    os.makedirs(INSTANCE_DIR, exist_ok=True)
-    DB_PATH = os.path.join(INSTANCE_DIR, "appdata.db")
+    # Local SQLite fallback
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DB_PATH
 
+# ================= INIT DB =================
 db = SQLAlchemy(app)
 
 # ================= LOGIN =================
@@ -253,4 +255,5 @@ def reset_password():
 # ================= START =================
 if __name__ == "__main__":
     app.run()
+
 
