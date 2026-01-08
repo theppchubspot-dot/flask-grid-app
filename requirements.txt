@@ -4,3 +4,4 @@ flask-login
 werkzeug
 openpyxl
 gunicorn
+psycopg2-binary
