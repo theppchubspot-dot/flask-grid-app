@@ -38,33 +38,24 @@ const hot = new Handsontable(container, {
 
   height: 'auto',
   width: '100%',
-
-  stretchH: 'all',   // ✅ right side blank fix
+  stretchH: 'all',
 
   minRows: 30,
-  minSpareRows: 1,   // row auto add
-  minSpareCols: 1,   // 👈 column auto add (IMPORTANT)
+  minSpareRows: 1,
+  minSpareCols: 1,     // 👈 column auto add
 
   autoWrapRow: true,
   autoWrapCol: true,
 
-  contextMenu: [
-    'row_above',
-    'row_below',
-    'col_left',
-    'col_right',
-    'remove_row',
-    'remove_col'
-  ],
-
-  allowInsertRow: true,
-  allowInsertColumn: true,   // 👈 column add enable
+  contextMenu: true,   // 👈 now Insert Column will appear
+  dropdownMenu: true,
 
   manualColumnResize: true,
   manualRowResize: true,
 
   licenseKey: 'non-commercial-and-evaluation'
 });
+
 
 
 
@@ -155,5 +146,6 @@ function deleteSheet() {
 function pinSheet() {
   window.location.href = `/pin-grid/${selectedGridId}`;
 }
+
 
 
